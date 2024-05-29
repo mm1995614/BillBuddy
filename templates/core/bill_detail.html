@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Detail</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header>
+        <h1>{{ bill.name }} Details</h1>
+        <nav>
+            <ul>
+                <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section id="bill-info">
+            <p>Bill Name: {{ bill.name }}</p>
+            <p>Bill Currency: {{ bill.currency }}</p>
+            <p>Bill Members: 
+                {% for member in bill.members.all %}
+                    {{ member.username }}
+                {% endfor %}
+            </p>
+        </section>
+        <section id="expenses">
+            <h2>Expenses</h2>
+            <ul>
+                {% for expense in bill.expenses.all %}
+                    <li>{{ expense.description }} - {{ expense.amount }} paid by {{ expense.paid_by.username }}</li>
+                {% endfor %}
+            </ul>
+        </section>
+    </main>
+</body>
+</html>

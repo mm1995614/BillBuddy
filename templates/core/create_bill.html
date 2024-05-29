@@ -1,0 +1,48 @@
+{% load static %}
+<!-- templates/core/create_bill.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Bill</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header>
+        <h1>Create Bill</h1>
+        <nav>
+            <ul>
+                <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li><a href="{% url 'account_settings' %}">Account Settings</a></li>
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section id="create-bill">
+            <h2>Create Bill</h2>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <label for="bill-name">Bill Name:</label>
+                <input type="text" id="bill-name" name="bill-name" required>
+                
+                <label for="bill-members">Bill Members:</label>
+                <input type="text" id="bill-members" name="bill-members" required>
+
+                <label for="bill-currency">Bill Currency:</label>
+                <input type="text" id="bill-currency" name="bill-currency" value="GBP" required>
+
+                <label for="bill-photo">Bill Photo:</label>
+                <input type="file" id="bill-photo" name="bill-photo">
+
+                <button type="submit">Save</button>
+            </form>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2024 BillBuddy</p>
+    </footer>
+    <script src="{% static 'js/scripts.js' %}"></script>
+</body>
+</html>
