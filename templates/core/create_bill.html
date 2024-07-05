@@ -1,5 +1,4 @@
 {% load static %}
-<!-- templates/core/create_bill.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,42 +6,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Bill</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container--default .select2-selection--multiple {
+            height: auto;
+            min-height: 38px;
+        }
+        .select2-container .select2-search--inline .select2-search__field {
+            width: 100% !important;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Create Bill</h1>
-        <nav>
-            <ul>
-                <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-                <li><a href="{% url 'account_settings' %}">Account Settings</a></li>
-                <li><a href="{% url 'logout' %}">Logout</a></li>
-            </ul>
-        </nav>
-    </header>
-    <main>
-        <section id="create-bill">
-            <h2>Create Bill</h2>
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <label for="bill-name">Bill Name:</label>
-                <input type="text" id="bill-name" name="bill-name" required>
-                
-                <label for="bill-members">Bill Members:</label>
-                <input type="text" id="bill-members" name="bill-members" required>
-
-                <label for="bill-currency">Bill Currency:</label>
-                <input type="text" id="bill-currency" name="bill-currency" value="GBP" required>
-
-                <label for="bill-photo">Bill Photo:</label>
-                <input type="file" id="bill-photo" name="bill-photo">
-
-                <button type="submit">Save</button>
-            </form>
-        </section>
-    </main>
-    <footer>
-        <p>&copy; 2024 BillBuddy</p>
-    </footer>
+    <div class="container">
+        <header>
+            <div class="header-container">
+                <h1>Create Bill</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{% url 'dashboard' %}">Home</a></li>
+                </ul>
+            </nav>
+        </header>
+        <main>
+            <section id="create-bill">
+                <form method="post">
+                    {% csrf_token %}
+                    <label for="bill-name">Bill Name:</label>
+                    <input type="text" id="bill-name" name="bill-name" required>
+                    
+                    <label for="bill-currency">Bill Currency:</label>
+                    <input type="text" id="bill-currency" name="bill-currency" value="GBP" required>
+                    
+                    <label for="bill-members">Bill Members:</label>
+                    <select id="bill-members" name="bill-members" class="select2" multiple required>
+                        {% for friend in friends %}
+                            <option value="{{ friend.username }}">{{ friend.username }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <button type="submit">Create Bill</button>
+                </form>
+            </section>
+        </main>
+        <footer>
+            <p>&copy; 2024 BillBuddy</p>
+        </footer>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2({
+                theme: 'default',
+                width: '100%'
+            });
+        });
+    </script>
     <script src="{% static 'js/scripts.js' %}"></script>
 </body>
 </html>

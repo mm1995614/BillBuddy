@@ -4,36 +4,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bill Detail</title>
+    <title>{{ bill.name }} Details</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-    <header>
-        <h1>{{ bill.name }} Details</h1>
-        <nav>
-            <ul>
-                <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-            </ul>
-        </nav>
-    </header>
-    <main>
-        <section id="bill-info">
-            <p>Bill Name: {{ bill.name }}</p>
-            <p>Bill Currency: {{ bill.currency }}</p>
-            <p>Bill Members: 
-                {% for member in bill.members.all %}
-                    {{ member.username }}
-                {% endfor %}
-            </p>
-        </section>
-        <section id="expenses">
-            <h2>Expenses</h2>
-            <ul>
-                {% for expense in bill.expenses.all %}
-                    <li>{{ expense.description }} - {{ expense.amount }} paid by {{ expense.paid_by.username }}</li>
-                {% endfor %}
-            </ul>
-        </section>
-    </main>
+    <div class="container">
+        <header>
+            <h1>{{ bill.name }}</h1>
+            <nav>
+                <ul>
+                    <li><a href="{% url 'dashboard' %}">Home</a></li>
+                </ul>
+            </nav>
+            <div class="bill-info">
+                <p>
+                    Bill Currency: {{ bill.currency }}<br>
+                    Bill Members: 
+                    {% for member in bill.members.all %}
+                        {{ member.username }}
+                    {% endfor %}
+                </p>
+            </div>
+        </header>
+        <main>
+            <section id="add-expense">
+                <h2>Add Expense</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <label for="description">Description:</label>
+                    <input type="text" id="description" name="description" required>
+
+                    <label for="amount">Amount:</label>
+                    <input type="text" id="amount" name="amount" pattern="\d+(\.\d{1,2})?" required>
+                    <button type="button" id="open-calculator-button">Open Calculator</button>
+                    <div id="calculator-modal" class="modal">
+                        <div class="modal-content">
+                            <span class="close-button">&times;</span>
+                            <h2>Currency Calculator</h2>
+                            <label for="calc-amount">Amount:</label>
+                            <input type="text" id="calc-amount" name="calc-amount">
+                    
+                            <label for="calc-currency">Currency:</label>
+                            <select id="calc-currency" name="calc-currency">
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBP">GBP</option>
+                                <!-- 添加其他需要的貨幣 -->
+                            </select>
+                    
+                            <button type="button" id="calculate-button">Calculate</button>
+                            <p id="calc-result">Converted Amount: </p>
+                        </div>
+                    </div>
+                    
+                    <label for="paid_by">Paid by:</label>
+                    <select id="paid_by" name="paid_by" required>
+                        {% for member in members %}
+                            <option value="{{ member.username }}" {% if member == current_user %}selected{% endif %}>{{ member.username }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="split_type">Split Type:</label>
+                    <select id="split_type" name="split_type" required>
+                        <option value="equal">Equal Split</option>
+                        <option value="custom">Custom Split</option>
+                    </select>
+
+                    <div id="participants-section" style="display: none;">
+                        <label for="participants">Participants:</label>
+                        <div id="participants">
+                            {% for member in members %}
+                                <label for="participant_{{ member.id }}">
+                                    <input type="checkbox" id="participant_{{ member.id }}" name="participants" value="{{ member.id }}">
+                                    {{ member.username }}
+                                    <input type="text" id="participant_amount_{{ member.id }}" name="participant_amount_{{ member.id }}" class="custom-input" style="display: none;" placeholder="Amount">
+                                </label><br>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="register-link">Add Expense</button>
+                    </form>                 
+                </form>
+            </section>
+            <section id="expenses">
+                <h2>Expenses</h2>
+                <ul>
+                    {% for expense in expenses %}
+                    <li>
+                        <a href="#" class="description-link" data-expense-id="{{ expense.id }}">{{ expense.description }}</a> - {{ expense.amount }} paid by {{ expense.paid_by.username }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </section>
+            <section id="calculate-debts">
+                <h2>Calculate Debts</h2>
+                <div class="calculate-debts-container">
+                    <button id="calculate-button">Calculate</button>
+                    <div id="debts-result"></div>
+                    <div class="spacer"></div>
+                    <button id="delete-bill-button">Delete {{ bill.name }}</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- 模態窗口結構 -->
+        <div id="edit-expense-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2>Edit Expense</h2>
+                <form id="edit-expense-form" method="post" action="{% url 'edit_expense' 0 %}">
+                    {% csrf_token %}
+                    <label for="edit-description">Description:</label>
+                    <input type="text" id="edit-description" name="description" required>
+
+                    <label for="edit-amount">Amount:</label>
+                    <input type="text" id="edit-amount" name="amount" pattern="\d+(\.\d{1,2})?" required>
+
+                    <label for="edit-paid_by">Paid by:</label>
+                    <select id="edit-paid_by" name="paid_by" required>
+                        {% for member in members %}
+                            <option value="{{ member.id }}">{{ member.username }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="edit-split_type">Split Type:</label>
+                    <select id="edit-split_type" name="split_type" required>
+                        <option value="equal">Equal Split</option>
+                        <option value="custom">Custom Split</option>
+                    </select>
+
+                    <div id="edit-participants-section" style="display: none;">
+                        <label for="edit-participants">Participants:</label>
+                        <div id="edit-participants">
+                            {% for member in members %}
+                            <label for="edit_participant_{{ member.id }}">
+                                <input type="checkbox" id="edit_participant_{{ member.id }}" name="participants" value="{{ member.id }}">
+                                {{ member.username }}
+                                <input type="text" id="edit_participant_amount_{{ member.id }}" name="participant_amount_{{ member.id }}" class="custom-input" style="display: none;" placeholder="Amount">
+                            </label><br>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <button type="submit" class="register-link">Save Changes</button>
+                <button type="button" id="delete-expense-button" class="register-link">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 刪除確認模態窗口 -->
+<div id="delete-bill-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Confirm Deletion</h2>
+        <p>Are you sure you want to delete the bill "{{ bill.name }}"?</p>
+        <form method="post" action="{% url 'delete_bill' bill.id %}">
+            {% csrf_token %}
+            <button type="submit">Yes, Delete</button>
+            <button type="button" class="register-link">Cancel</button>
+        </form>
+    </div>
+</div>
+
+<script src="{% static 'js/scripts.js' %}"></script>
 </body>
 </html>

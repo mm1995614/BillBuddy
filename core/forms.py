@@ -5,6 +5,9 @@ from .models import CustomUser
 from django.core.exceptions import ValidationError
 import re
 from django.contrib.auth.forms import AuthenticationForm
+from .models import UserProfile, Bill, Expense
+import json
+
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -50,3 +53,75 @@ class CustomUserChangeForm(UserChangeForm):
 
 class EmailAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(label='Email', max_length=254)
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['profile_picture', 'bank_account', 'bank_qr_code']
+
+class BillForm(forms.ModelForm):
+    class Meta:
+        model = Bill
+        fields = ['name', 'currency', 'members']
+        widgets = {
+            'members': forms.SelectMultiple(attrs={'class': 'select2'}),
+            'currency': forms.Select(choices=[
+                ('USD', 'USD'),
+                ('EUR', 'EUR'),
+                ('GBP', 'GBP'),
+                ('TWD', 'TWD'),
+                ('JPY', 'JPY'),
+                ('CNY', 'CNY'),
+                ('HKD', 'HKD'),
+                ('MOP', 'MOP'),
+                ('KRW', 'KRW'),
+                ('VND', 'VND'),
+                ('THB', 'THB'),
+                ('SGD', 'SGD'),
+                ('INR', 'INR'),
+                ('MVR', 'MVR'),
+                ('CHF', 'CHF'),
+                ('SEK', 'SEK'),
+                ('CAD', 'CAD'),
+                ('MXN', 'MXN'),
+                ('AUD', 'AUD'),
+                ('NZD', 'NZD'),
+                ('EGP', 'EGP'),
+            ]),
+        }
+
+class ExpenseForm(forms.ModelForm):
+    split_type = forms.ChoiceField(choices=[('equal', 'Equal Split'), ('custom', 'Custom Split')], required=True)
+    participants = forms.ModelMultipleChoiceField(queryset=CustomUser.objects.all(), required=False)
+    participant_amounts = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+    class Meta:
+        model = Expense
+        fields = ['description', 'amount', 'paid_by', 'split_type', 'participants', 'participant_amounts']
+
+    def __init__(self, *args, **kwargs):
+        initial = kwargs.get('initial', {})
+        expense = kwargs.get('instance')
+        if expense:
+            initial['split_type'] = 'custom' if expense.participantamount_set.exists() else 'equal'
+            if expense.participantamount_set.exists():
+                participant_data = {pa.user.id: str(pa.amount) for pa in expense.participantamount_set.all()}
+                initial['participant_amounts'] = json.dumps(participant_data)
+                initial['participants'] = expense.participantamount_set.values_list('user', flat=True)
+        kwargs['initial'] = initial
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        split_type = cleaned_data.get("split_type")
+        participants = cleaned_data.get("participants")
+        participant_amounts = cleaned_data.get("participant_amounts")
+
+        if split_type == 'custom' and not participants:
+            self.add_error('participants', 'You must select participants for a custom split.')
+
+        return cleaned_data
+    
+
+    
+    
