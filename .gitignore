@@ -1,7 +1,4 @@
-*.pyc
-billbuddy-428516-7770eb9d2599.json
-
-# Python
+# Python related
 __pycache__/
 *.py[cod]
 *$py.class
@@ -16,14 +13,37 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# Database
+# SQLite related ignores are kept despite using MySQL
+# Add potential MySQL configuration files
+*.cnf
+
+# Keys and sensitive information
+billbuddy-428516-7770eb9d2599.json
+
+# Static files collection
+/staticfiles/
+
+# Media files
+/media/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
 # macOS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 
-# VS Code
-.vscode/
-
-# PyCharm
-.idea/
+# Windows
+Thumbs.db
+ehthumbs.db
 
 # Compiled source
 *.com
@@ -33,7 +53,7 @@ db.sqlite3-journal
 *.o
 *.so
 
-# Packages
+# Compressed files
 *.7z
 *.dmg
 *.gz
@@ -48,15 +68,20 @@ db.sqlite3-journal
 *.sql
 *.sqlite
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Specific to your project
+# Project specific
 cloud-sql-proxy
 get-pip.py
+
+# Frontend related (if applicable)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Temporary files
+*.bak
+*.tmp
+*.temp
+
+# System files
+.DS_Store
+Thumbs.db
