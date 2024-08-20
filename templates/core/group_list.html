@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Following</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://kit.fontawesome.com/7fc0470546.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-container">
+                <h1>Groups</h1>
+            </div>
+            <nav class="top-nav">
+                <ul>
+                    <li>
+                        <a href="{% url 'friend_list' %}" class="icon-link">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-user-plus" style="color: #d2a679;"></i>
+                                <span class="icon-text">Friends</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'account_settings' %}" class="icon-link">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-gear" style="color: #d2a679;"></i>
+                                <span class="icon-text">Account</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'dashboard' %}" class="icon-link">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-house" style="color: #d2a679;"></i>
+                                <span class="icon-text">Home</span>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </header>
+        <main>
+            <section id="bill-list">
+                <div class="section-header">
+                    <h2>Groups</h2>
+                    <div class="header-actions">
+                        <button class="search-toggle confirm-button" aria-label="Toggle search">
+                            <i class="fa-solid fa-magnifying-glass-plus"></i>
+                        </button>
+                        <a href="{% url 'create_bill' %}" class="confirm-button" title="Create Bill" aria-label=Create Bill">
+                            <i class="fa-solid fa-plus"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="search-container" style="display: none;">
+                    <form method="get" action="{% url 'group_list' %}" class="search-form">
+                        <input type="text" name="search" class="search-input" placeholder="Search group name or member" value="{{ search_query }}">
+                    </form>
+                </div>
+                <div class="scrollable-container">
+                    <ul class="bill-list">
+                        {% for bill in bills %}
+                        <li class="bill-item">
+                            <a href="{% url 'bill_detail' bill.id %}" class="bill-link">
+                                <div class="bill-info">
+                                    <h3 class="bill-name">{{ bill.name }}</h3>
+                                    <p class="bill-members">
+                                        {% for member in bill.members.all %}
+                                            {{ member.username }}{% if not forloop.last %} / {% endif %}
+                                        {% endfor %}
+                                    </p>
+                                </div>
+                                <span class="bill-arrow">›</span>
+                            </a>
+                        </li>
+                        {% empty %}
+                        <li>No matching groups found</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </section>
+        </main>
+        <footer>
+            <p>&copy; 2024 BillBuddy</p>
+        </footer>
+    </div>
+    <script src="{% static 'js/scripts.js' %}"></script>
+</body>
+</html>

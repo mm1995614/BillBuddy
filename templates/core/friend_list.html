@@ -1,38 +1,150 @@
 {% load static %}
-<!-- templates/core/friend_list.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friends List</title>
+    <title>Friends and Requests</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://kit.fontawesome.com/7fc0470546.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <header>
-        <h1>Friends List</h1>
-        <nav>
-            <ul>
-                <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-            </ul>
-        </nav>
-    </header>
-    <main>
-        <section id="friends">
-            <ul>
-                {% for friend in friends %}
-                    <li>{{ friend.friend.username }}</li>
-                {% endfor %}
-            </ul>
-        </section>
-        <section id="add-friend">
-            <form method="post">
-                {% csrf_token %}
-                <label for="friend-email">Add Friend:</label>
-                <input type="email" id="friend-email" name="friend-email" required>
-                <button type="submit">Add Friend</button>
-            </form>
-        </section>
-    </main>
+    <div class="container">
+        <header>
+            <div class="header-container">
+                <h1>Friends</h1>
+            </div>
+            <nav class="top-nav">
+                <ul>
+                    <li>
+                        <a href="{% url 'group_list' %}" class="icon-link">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-people-group" style="color: #d2a679;"></i>
+                                <span class="icon-text">Groups</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'account_settings' %}" class="icon-link">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-gear" style="color: #d2a679;"></i>
+                                <span class="icon-text">Account</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'dashboard' %}" class="icon-link">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-house" style="color: #d2a679;"></i>
+                                <span class="icon-text">Home</span>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </header>
+        <main>
+            <section id="friend-requests" class="friends-section">
+                <div class="section-header">
+                    <h2>Friend Requests</h2>
+                </div>
+                {% if received_requests %}
+                    <ul class="bill-list friend-list">
+                        {% for request in received_requests %}
+                        
+                        <div class="friend-request-info">
+                            <h3 class="bill-name">{{ request.from_user.username }} wants to be your friend</h3>
+                            <div class="friend-request-actions">
+                                <a href="{% url 'accept_friend_request' request.id %}" class="icon-link">
+                                    <div class="icon-container">
+                                        <i class="fa-solid fa-check" style="color: #2cfa02;"></i>
+                                    </div>
+                                </a>
+                                <a href="{% url 'reject_friend_request' request.id %}" class="icon-link">
+                                    <div class="icon-container">
+                                        <i class="fa-solid fa-xmark" style="color: #fa0202;"></i>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No pending friend requests.</p>
+                {% endif %}
+            </section>
+
+            <section id="bill-list" class="friends-section">
+                <div class="section-header">
+                    <h2>Friends</h2>
+                    <div class="header-actions">
+                        <button class="search-toggle confirm-button" aria-label="Toggle search">
+                            <i class="fa-solid fa-magnifying-glass-plus"></i>
+                        </button>
+                        <a href="{% url 'add_friend' %}" class="confirm-button" title="Add New Friend" aria-label="Add New Friend">
+                            <i class="fa-solid fa-plus"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="search-container" style="display: none;">
+                    <form method="get" action="{% url 'friend_list' %}" class="search-form">
+                        <input type="text" name="search" class="search-input" placeholder="Search friend's username" value="{{ search_query }}">
+                    </form>
+                </div>
+                <div class="scrollable-container">
+                    <ul class="bill-list friend-list">
+                        {% for friend in friends %}
+                        <li class="bill-item friend-item">
+                            <a href="#" class="bill-link friend-link" data-friend-id="{{ friend.friend.id }}">
+                                <div class="friend-avatar">
+                                    <img src="" alt="{{ friend.friend.username }}" class="avatar-img" data-friend-id="{{ friend.friend.id }}">
+                                </div>
+                                <div class="bill-info">
+                                    <h3 class="bill-name">{{ friend.friend.username }}</h3>
+                                    <p class="bill-members">{{ friend.friend.email }}</p>
+                                </div>
+                                <span class="bill-arrow">›</span>
+                            </a>
+                        </li>
+                        {% empty %}
+                        <li>No matching friends found</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Friend Profile Modal -->
+        <div id="friend-profile-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2>Friend Profile</h2>
+                <div id="friend-profile-content">
+                    <img id="friend-profile-photo" src="" alt="Profile Photo" class="profile-picture">
+                    <p>Username: <span id="friend-username"></span></p>
+                    <p>Email: <span id="friend-email"></span></p>
+                    <p>Payment Details: <span id="friend-bank-account"></span></p>
+                    <p>Payment QR Code:</p>
+                    <img id="friend-bank-qr-code" src="" alt="Bank QR Code" class="bank-qr-code">
+                    <button id="remove-friend-button-modal" class="remove-friend-button">Remove Friend</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="confirm-delete-modal" class="modal">
+            <div class="modal-content">
+                <h2>Confirm Delete</h2>
+                <p>Are you sure you want to remove this friend?</p>
+                <button id="confirm-delete-yes" class="confirm-button">Yes</button>
+                <button id="confirm-delete-no" class="confirm-button">No</button>
+            </div>
+        </div>
+        
+        <footer>
+            <p>&copy; 2024 BillBuddy</p>
+        </footer>
+    </div>
+    <script src="{% static 'js/scripts.js' %}"></script>
 </body>
 </html>

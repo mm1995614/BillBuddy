@@ -3,13 +3,11 @@ from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
 from .models import CustomUser, Friend
 
-# 定义一个InlineAdmin类
 class FriendInline(admin.TabularInline):
     model = Friend
     fk_name = "user"
     extra = 0
 
-# 扩展现有的CustomUserAdmin
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser

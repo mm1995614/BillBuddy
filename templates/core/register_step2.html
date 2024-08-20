@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Step 2</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <style>
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body class="register-page">
+    <div class="login-container">
+        <h2>Register - Step 2</h2>
+        <form method="post" enctype="multipart/form-data" id="profile-form">
+            {% csrf_token %}
+            <label for="profile-photo">Profile Photo:</label>
+            <input type="file" id="profile-photo" name="profile_picture" accept="image/*" required>
+            <div id="crop-container" style="display:none;">
+                <img id="cropper">
+                <button type="button" id="crop-button" class="btn">Crop</button>
+            </div>
+            <div class="profile-picture-container" style="display:none;">
+                <img id="profile-picture-preview" alt="Profile Picture">
+            </div>
+            <input type="hidden" id="profile-picture-data" name="profile_picture_data">
+        
+            <label for="bank-account">Payment Details (recommended but optional):</label>
+            <input type="text" id="bank-account" name="bank_account">
+        
+            <label for="qr-code">Payment QR Code (recommended but optional):</label>
+            <input type="file" id="qr-code" name="bank_qr_code">
+            <div id="qr-code-preview-container" class="qr-code-container"></div>
+            
+            <button type="submit" class="btn btn-primary">Complete Registration</button>
+        </form>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script src="{% static 'js/scripts.js' %}"></script>
+</body>
+</html>

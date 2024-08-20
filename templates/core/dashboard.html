@@ -2,11 +2,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script>console.log("HTML file loaded");</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://kit.fontawesome.com/7fc0470546.js" crossorigin="anonymous"></script>
 </head>
 <body>
     <div class="container">
@@ -17,66 +17,59 @@
                     <img src="{{ profile_picture_url }}" alt="Profile Picture" class="profile-picture">
                 {% endif %}
             </div>
-            <nav>
+            <nav class="top-nav">
                 <ul>
-                    <li><a href="{% url 'create_bill' %}">Create Bill</a></li>
-                    <li><a href="{% url 'add_friend' %}">Add New Friend</a></li>
-                    <li><a href="{% url 'account_settings' %}">Account Settings</a></li>
-                    <li><a href="{% url 'logout' %}">Logout</a></li>
+                    <li>
+                        <a href="{% url 'group_list' %}" class="icon-link">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-people-group" style="color: #d2a679;"></i>
+                                <span class="icon-text">Groups</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'friend_list' %}" class="icon-link">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-user-plus" style="color: #d2a679;"></i>
+                                <span class="icon-text">Friends</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'account_settings' %}" class="icon-link">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-gear" style="color: #d2a679;"></i>
+                                <span class="icon-text">Account</span>
+                            </div>
+                        </a>
+                    </li>
                 </ul>
             </nav>
         </header>
         <main>
-            <section id="bill-list">
-                <h2>Bill List</h2>
-                <ul>
-                    {% for bill in bills %}
-                    <li>
-                        <a href="{% url 'bill_detail' bill.id %}">{{ bill.name }}</a>
+            <section id="dashboard-summary">
+                <h2>Recent Groups</h2>
+                <ul class="recent-bills-list">
+                    {% for bill in recent_bills %}
+                    <li class="bill-item">
+                        <a href="{% url 'bill_detail' bill.id %}" class="bill-link">
+                            <div class="bill-info">
+                                <h3 class="bill-name">{{ bill.name }}</h3>
+                                <p class="bill-members">
+                                    {% for member in bill.members.all %}
+                                        {{ member.username }}{% if not forloop.last %} / {% endif %}
+                                    {% endfor %}
+                                </p>
+                            </div>
+                            <span class="bill-arrow">›</span>
+                        </a>
                     </li>
                     {% empty %}
-                    <li>No bills found.</li>
-                    {% endfor %}
-                </ul>
-            </section>
-
-            <section id="friends-list">
-                <h2>Friends List</h2>
-                <ul>
-                    {% for friend in friends %}
-                        <li>
-                            <a href="#" class="friend-link" data-friend-id="{{ friend.friend.id }}">{{ friend.friend.username }}</a>
-                        </li>
+                    <li>No recent groups</li>
                     {% endfor %}
                 </ul>
             </section>
         </main>
-        <!-- Friend Profile Modal -->
-        <div id="friend-profile-modal" class="modal">
-            <div class="modal-content">
-                <span class="close-button">&times;</span>
-                <h2>Friend Profile</h2>
-                <div id="friend-profile-content">
-                    <img id="friend-profile-photo" src="" alt="Profile Photo" class="profile-picture">
-                    <p>Username: <span id="friend-username"></span></p>
-                    <p>Email: <span id="friend-email"></span></p>
-                    <p>Bank Account Number: <span id="friend-bank-account"></span></p>
-                    <p>Bank QR Code:</p>
-                    <img id="friend-bank-qr-code" src="" alt="Bank QR Code" class="bank-qr-code">
-                    <button id="remove-friend-button-modal" class="remove-friend-button">Remove Friend</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Confirm Delete Modal -->
-        <div id="confirm-delete-modal" class="modal">
-            <div class="modal-content">
-                <h2>Confirm Delete</h2>
-                <p>Are you sure you want to remove this friend?</p>
-                <button id="confirm-delete-yes" class="confirm-button">Yes</button>
-                <button id="confirm-delete-no" class="confirm-button">No</button>
-            </div>
-        </div>
         <footer>
             <p>&copy; 2024 BillBuddy</p>
         </footer>

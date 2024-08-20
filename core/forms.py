@@ -7,11 +7,15 @@ import re
 from django.contrib.auth.forms import AuthenticationForm
 from .models import UserProfile, Bill, Expense
 import json
+from django.contrib.auth import get_user_model
+from .models import Note, Comment
 
-
-class CustomUserCreationForm(UserCreationForm):
+class BasicUserCreationForm(forms.ModelForm):
     email = forms.EmailField(required=True)
     username = forms.CharField(max_length=20, required=True)
+    password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
+    password2 = forms.CharField(label='Password confirmation', widget=forms.PasswordInput)
+
 
     class Meta:
         model = CustomUser
@@ -20,31 +24,65 @@ class CustomUserCreationForm(UserCreationForm):
     def clean_username(self):
         username = self.cleaned_data.get('username')
         if len(username) > 20:
-            raise ValidationError("使用者名稱不能超過20個字元")
+            raise ValidationError("Username cannot exceed 20 characters")
         if re.search(r'[\u4e00-\u9fff]', username) and len(username) > 10:
-            raise ValidationError("使用者名稱不能超過10個中文字")
+            raise ValidationError("Username cannot exceed 10 Chinese characters")
         return username
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError("該電子郵件地址已被使用")
+            raise ValidationError("This email address is already in use")
         return email
 
     def clean_password1(self):
         password1 = self.cleaned_data.get('password1')
         if len(password1) < 8:
-            raise ValidationError("密碼長度必須至少8個字元")
+            raise ValidationError("Password must be at least 8 characters long")
         if not re.search(r'[A-Za-z]', password1) or not re.search(r'\d', password1):
-            raise ValidationError("密碼必須包含字母和數字")
+            raise ValidationError("Password must contain both letters and numbers")
         return password1
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1")
+        password2 = cleaned_data.get("password2")
+
+        if password1 and password2 and password1 != password2:
+            self.add_error('password2', "Passwords do not match")
+            print("Passwords do not match")
+            raise ValidationError("Passwords do not match")
 
     def save(self, commit=True):
-        user = super(CustomUserCreationForm, self).save(commit=False)
-        user.email = self.cleaned_data["email"]
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
         if commit:
             user.save()
         return user
+
+class ProfileCompletionForm(forms.ModelForm):
+    profile_picture = forms.ImageField(required=True)
+    bank_account = forms.CharField(max_length=50, required=False)
+    bank_qr_code = forms.ImageField(required=False)
+    profile_picture_data = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+    class Meta:
+        model = UserProfile
+        fields = ('profile_picture', 'bank_account', 'bank_qr_code', 'profile_picture_data')
+
+    def clean_profile_picture(self):
+        profile_picture = self.cleaned_data.get('profile_picture')
+        if profile_picture:
+            if profile_picture.size > 5 * 1024 * 1024:  # 5MB
+                raise ValidationError("Profile picture size cannot exceed 5MB")
+        return profile_picture
+
+    def clean_bank_qr_code(self):
+        bank_qr_code = self.cleaned_data.get('bank_qr_code')
+        if bank_qr_code:
+            if bank_qr_code.size > 5 * 1024 * 1024:  # 5MB
+                raise ValidationError("QR code image size cannot exceed 5MB")
+        return bank_qr_code
 
 class CustomUserChangeForm(UserChangeForm):
     class Meta:
@@ -54,50 +92,26 @@ class CustomUserChangeForm(UserChangeForm):
 class EmailAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(label='Email', max_length=254)
 
+class UserForm(forms.ModelForm):
+    class Meta:
+        model = get_user_model()
+        fields = ['username']
+
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = ['profile_picture', 'bank_account', 'bank_qr_code']
 
-class BillForm(forms.ModelForm):
-    class Meta:
-        model = Bill
-        fields = ['name', 'currency', 'members']
-        widgets = {
-            'members': forms.SelectMultiple(attrs={'class': 'select2'}),
-            'currency': forms.Select(choices=[
-                ('USD', 'USD'),
-                ('EUR', 'EUR'),
-                ('GBP', 'GBP'),
-                ('TWD', 'TWD'),
-                ('JPY', 'JPY'),
-                ('CNY', 'CNY'),
-                ('HKD', 'HKD'),
-                ('MOP', 'MOP'),
-                ('KRW', 'KRW'),
-                ('VND', 'VND'),
-                ('THB', 'THB'),
-                ('SGD', 'SGD'),
-                ('INR', 'INR'),
-                ('MVR', 'MVR'),
-                ('CHF', 'CHF'),
-                ('SEK', 'SEK'),
-                ('CAD', 'CAD'),
-                ('MXN', 'MXN'),
-                ('AUD', 'AUD'),
-                ('NZD', 'NZD'),
-                ('EGP', 'EGP'),
-            ]),
-        }
-
 class ExpenseForm(forms.ModelForm):
     split_type = forms.ChoiceField(choices=[('equal', 'Equal Split'), ('custom', 'Custom Split')], required=True)
     participants = forms.ModelMultipleChoiceField(queryset=CustomUser.objects.all(), required=False)
     participant_amounts = forms.CharField(widget=forms.HiddenInput(), required=False)
+    photo = forms.ImageField(required=False)
+    date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
 
     class Meta:
         model = Expense
-        fields = ['description', 'amount', 'paid_by', 'split_type', 'participants', 'participant_amounts']
+        fields = ['description', 'amount', 'paid_by', 'split_type', 'participants', 'participant_amounts', 'photo', 'date']
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get('initial', {})
@@ -122,6 +136,30 @@ class ExpenseForm(forms.ModelForm):
 
         return cleaned_data
     
+class NoteForm(forms.ModelForm):
+    class Meta:
+        model = Note
+        fields = ['content', 'image']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'rows': 4, 
+                'cols': 50,
+                'style': 'font-size: 16px; max-height: 150px;',
+                'class': 'no-zoom-textarea'
+            }),
+        }
 
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['content', 'image']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'rows': 2, 
+                'placeholder': 'Add a comment...',
+                'style': 'font-size: 16px; max-height: 150px;',
+                'class': 'no-zoom-textarea'
+            }),
+        }
     
     

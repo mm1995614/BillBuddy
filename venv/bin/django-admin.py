@@ -1,4 +1,4 @@
-#!/Users/joelwang/Desktop/Final_Project/code/venv/bin/python3.12
+#!/Users/joelwang/Desktop/Final_Project /code/venv/bin/python3.12
 # When the django-admin.py deprecation ends, remove this script.
 import warnings
 

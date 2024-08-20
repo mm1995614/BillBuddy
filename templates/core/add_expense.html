@@ -1,0 +1,113 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ bill.name }} Details</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://kit.fontawesome.com/7fc0470546.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>{{ bill.name }}</h1>
+            <nav class="top-nav">
+                <ul>
+                    <li>
+                        <a href="{% url 'bill_detail' bill.id %}" class="icon-link">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-list" style="color: #d2a679;"></i>
+                                <span class="icon-text">Expenses</span>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="bill-info">
+                <p>
+                    Expenses Currency: {{ bill.currency }}<br>
+                    Group Members: 
+                    {% for member in bill.members.all %}
+                        {{ member.username }}{% if not forloop.last %} / {% endif %}
+                    {% endfor %}
+                </p>
+            </div>
+        </header>
+        <main>
+            <section id="add-expense">
+                <h2>Add Expense</h2>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <label for="date">Date:</label>
+                    <input type="date" id="date" name="date" required>
+
+                    <label for="description">Description:</label>
+                    <input type="text" id="description" name="description" required>
+
+                    <label for="amount">Amount:</label>
+                    <div class="amount-exchange-container">
+                        <input type="number" id="amount" name="amount" step="0.01" min="0" required style="margin-right: 10px;">
+                        <button type="button" id="currency-exchange-button">Currency Exchange</button>
+                    </div>
+
+                    <label for="paid_by">Paid by:</label>
+                    <select id="paid_by" name="paid_by" required class="large-select">
+                        {% for member in members %}
+                            <option value="{{ member.username }}" {% if member == current_user %}selected{% endif %}>{{ member.username }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="split_type">Split Type:</label>
+                    <select id="split_type" name="split_type" required class="large-select">
+                        <option value="equal">Equal Split</option>
+                        <option value="custom">Custom Split</option>
+                    </select>
+
+                    <div id="participants-section" style="display: none;">
+                        <label for="participants">Participants:</label>
+                        <div id="participants">
+                            {% for member in members %}
+                                <label for="participant_{{ member.id }}">
+                                    <input type="checkbox" id="participant_{{ member.id }}" name="participants" value="{{ member.id }}">
+                                    {{ member.username }}
+                                    <input type="number" id="participant_amount_{{ member.id }}" name="participant_amount_{{ member.id }}" class="custom-input" style="display: none;" placeholder="Amount" step="0.01" min="0">
+                                </label><br>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <label for="expense-photo">Expense Photo:</label>
+                    <input type="file" id="expense-photo" name="expense_photo" accept="image/*">
+                    <div id="expense-photo-preview-container" style="display: none;">
+                        <img id="expense-photo-preview" src="" alt="Expense photo preview" style="max-width: 200px; max-height: 200px;">
+                    </div>
+
+                    <button type="submit" class="register-link">Add Expense</button>
+                </form>
+            </section>
+        </main>
+
+        <div id="currency-exchange-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2>Currency Exchange</h2>
+                <p class="update-info">Exchange rates are updated daily at 9:05 AM (GMT+8)</p>
+                <form id="currency-exchange-form">
+                    <label for="amount-to-convert">Amount:</label>
+                    <input type="text" id="amount-to-convert" name="amount" pattern="\d+(\.\d{1,2})?" required>
+                    
+                    <label for="from-currency">From Currency:</label>
+                    <select id="from-currency" name="from_currency" required class="large-select"></select>
+                    
+                    <label for="to-currency">To Currency:</label>
+                    <select id="to-currency" name="to_currency" required class="large-select"></select>
+                    
+                    <button type="submit">Convert</button>
+                </form>
+                <div id="conversion-result"></div>
+            </div>
+        </div>
+    <script src="{% static 'js/scripts.js' %}"></script>
+</body>
+</html>
