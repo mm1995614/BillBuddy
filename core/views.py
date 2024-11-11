@@ -858,3 +858,12 @@ def user_logout(request):
     logout(request)
     return redirect('login')
 
+
+from rest_framework import viewsets
+from .models import BillBuddy  # 改成你的模型名稱
+from .serializers import BillBuddySerializer  # 相應的序列化器也要改名
+
+class BillBuddyViewSet(viewsets.ModelViewSet):
+    queryset = BillBuddy.objects.all()
+    serializer_class = BillBuddySerializer
+

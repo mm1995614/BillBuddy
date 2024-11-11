@@ -1,9 +1,12 @@
 from django.conf import settings
 from django.conf.urls.static import static
-from django.urls import path
+from django.urls import path, include
+from django.contrib import admin
 from . import views
 
 urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/', include('billbuddy.urls')),
     path('', views.dashboard, name='dashboard'),
     path('login/', views.user_login, name='login'),
     path('register/', views.register_step1, name='register'),
@@ -37,3 +40,5 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     #urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
+
+
