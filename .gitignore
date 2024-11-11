@@ -20,6 +20,7 @@ db.sqlite3-journal
 
 # Keys and sensitive information
 billbuddy-428516-7770eb9d2599.json
+.env
 
 # Static files collection
 /staticfiles/

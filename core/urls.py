@@ -1,12 +1,23 @@
 from django.conf import settings
 from django.conf.urls.static import static
-from django.urls import path, include
-from django.contrib import admin
+from django.urls import path
 from . import views
 
+# API
+api_urlpatterns = [
+    path('login/', views.login_api, name='login_api'),
+    path('register/step1/', views.register_step1_api, name='register_api'),
+    path('register/step2/', views.register_step2_api, name='register_step2_api'),
+    path('current-user/', views.current_user_api, name='current_user_api'),
+    path('recent-bills/', views.recent_bills_api, name='recent_bills_api'),
+    path('dashboard-stats/', views.dashboard_stats_api, name='dashboard_stats_api'),
+    path('profile/', views.profile_api, name='profile_api'),
+    path('change-password/', views.change_password_api, name='change_password_api'),
+    path('logout/', views.logout_api, name='logout_api'),
+]
+
+# Django
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include('billbuddy.urls')),
     path('', views.dashboard, name='dashboard'),
     path('login/', views.user_login, name='login'),
     path('register/', views.register_step1, name='register'),

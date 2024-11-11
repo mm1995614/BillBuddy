@@ -859,11 +859,230 @@ def user_logout(request):
     return redirect('login')
 
 
+### API ###
 from rest_framework import viewsets
-from .models import BillBuddy  # 改成你的模型名稱
-from .serializers import BillBuddySerializer  # 相應的序列化器也要改名
+from .models import Bill  
+from .serializers import BillSerializer  
 
-class BillBuddyViewSet(viewsets.ModelViewSet):
-    queryset = BillBuddy.objects.all()
-    serializer_class = BillBuddySerializer
+class BillViewSet(viewsets.ModelViewSet):
+    queryset = Bill.objects.all()
+    serializer_class = BillSerializer
 
+# Login & Register
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from django.contrib.auth import authenticate, login, logout
+from django.core.files.base import ContentFile
+import base64
+import uuid
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_api(request):
+    form = EmailAuthenticationForm(request, data=request.data)
+    if form.is_valid():
+        email = form.cleaned_data.get('username')
+        password = form.cleaned_data.get('password')
+        user = authenticate(request, username=email, password=password)
+        if user is not None:
+            login(request, user)
+            return Response({
+                'success': True,
+                'registration_complete': user.registration_complete,
+                'redirect': 'register_step2' if not user.registration_complete else 'dashboard'
+            })
+        else:
+            return Response({
+                'success': False,
+                'error': "Invalid email or password"
+            }, status=status.HTTP_400_BAD_REQUEST)
+    return Response({
+        'success': False,
+        'errors': form.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_step1_api(request):
+    form = BasicUserCreationForm(request.data)
+    if form.is_valid():
+        user = form.save()
+        user = authenticate(
+            request, 
+            username=user.username, 
+            password=form.cleaned_data['password1'],
+            backend='core.backends.EmailBackend'
+        )
+        if user is not None:
+            login(request, user, backend='core.backends.EmailBackend')
+            return Response({
+                'success': True,
+                'redirect': 'register_step2'
+            })
+    return Response({
+        'success': False,
+        'errors': form.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def register_step2_api(request):
+    user = request.user
+    if user.registration_complete:
+        return Response({
+            'success': False,
+            'error': 'Registration already completed',
+            'redirect': 'dashboard'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    form = ProfileCompletionForm(request.POST, request.FILES)
+    if form.is_valid():
+        try:
+            profile, created = UserProfile.objects.get_or_create(user=user)
+            
+            # 處理個人資料圖片
+            profile_picture_data = request.data.get('profile_picture_data')
+            if profile_picture_data:
+                format, imgstr = profile_picture_data.split(';base64,')
+                ext = format.split('/')[-1]
+                profile_picture = ContentFile(
+                    base64.b64decode(imgstr), 
+                    name=f'{uuid.uuid4()}.{ext}'
+                )
+                profile.profile_picture = profile_picture
+            elif 'profile_picture' in request.FILES:
+                profile.profile_picture = request.FILES['profile_picture']
+
+            # 處理其他欄位
+            profile.bank_account = form.cleaned_data['bank_account']
+            if 'bank_qr_code' in request.FILES:
+                profile.bank_qr_code = request.FILES['bank_qr_code']
+            
+            profile.save()
+            
+            user.registration_complete = True
+            user.save()
+
+            return Response({
+                'success': True,
+                'redirect': 'dashboard'
+            })
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response({
+        'success': False,
+        'errors': form.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
+
+# Dashboard
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def current_user_api(request):
+    User = get_user_model()
+    user = User.objects.get(pk=request.user.pk)
+    user_profile = UserProfile.objects.get(user=user)
+    
+    return Response({
+        'username': user.username,
+        'profilePicture': user_profile.profile_picture.url if user_profile.profile_picture else None,
+    })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def recent_bills_api(request):
+    user = request.user
+    if not user.registration_complete:
+        return Response({'error': 'Registration not complete'}, status=400)
+    
+    recent_bills = user.bills.all().order_by('-created_at')[:2]
+    
+    bills_data = [{
+        'id': bill.id,
+        'name': bill.name,
+        'members': [{
+            'id': member.id,
+            'username': member.username
+        } for member in bill.members.all()]
+    } for bill in recent_bills]
+    
+    return Response(bills_data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def dashboard_stats_api(request):
+    user = request.user
+    total_groups = user.bills.count()
+    friends = Friend.objects.filter(user=user).select_related('friend')
+    
+    return Response({
+        'totalGroups': total_groups,
+        'friends': [{
+            'id': friend.friend.id,
+            'username': friend.friend.username
+        } for friend in friends]
+    })
+
+# Account Setting
+
+
+@api_view(['GET', 'PUT'])
+@permission_classes([IsAuthenticated])
+def profile_api(request):
+    user = request.user
+    user_profile = UserProfile.objects.get_or_create(user=user)[0]
+
+    if request.method == 'GET':
+        return Response({
+            'username': user.username,
+            'email': user.email,
+            'bank_account': user_profile.bank_account,
+            'profile_picture': user_profile.profile_picture.url if user_profile.profile_picture else None,
+            'bank_qr_code': user_profile.bank_qr_code.url if user_profile.bank_qr_code else None
+        })
+
+    elif request.method == 'PUT':
+        try:
+            # 更新用戶名
+            if 'username' in request.data:
+                user.username = request.data['username']
+                user.save()
+
+            # 更新個人資料
+            if 'bank_account' in request.data:
+                user_profile.bank_account = request.data['bank_account']
+            
+            if 'profile_picture' in request.FILES:
+                user_profile.profile_picture = request.FILES['profile_picture']
+            
+            if 'bank_qr_code' in request.FILES:
+                user_profile.bank_qr_code = request.FILES['bank_qr_code']
+            
+            user_profile.save()
+
+            return Response({'message': 'Profile updated successfully'})
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password_api(request):
+    form = PasswordChangeForm(request.user, request.data)
+    if form.is_valid():
+        user = form.save()
+        update_session_auth_hash(request, user)
+        return Response({'message': 'Password updated successfully'})
+    return Response({'errors': form.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout_api(request):
+    logout(request)
+    return Response({'message': 'Successfully logged out'})

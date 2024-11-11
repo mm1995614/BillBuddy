@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 import os
-
+from dotenv import load_dotenv
+load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -45,12 +47,13 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React 
 ]
+
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = "billbuddy.urls"
 
@@ -90,9 +93,9 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'your_db_name',
-            'USER': 'your_user_name',
-            'PASSWORD': 'your_password',
+            'NAME': os.getenv('LOCAL_DB_NAME', 'billbuddy_db'),
+            'USER': os.getenv('LOCAL_DB_USER', 'root'),
+            'PASSWORD': os.getenv('LOCAL_DB_PASSWORD'),
             'HOST': '127.0.0.1',
             'PORT': '3306',
             'OPTIONS': {
