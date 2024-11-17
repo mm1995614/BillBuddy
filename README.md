@@ -2,7 +2,6 @@
 
 BillBuddy is a mobile web application designed for bill splitting. It aims to solve problems that friends or family members might encounter when sharing expenses during trips or activities.
 
-**Visit BillBuddy:** [https://billbuddy-428516.de.r.appspot.com/](https://billbuddy-428516.de.r.appspot.com/)
 
 
 ## Key Features
