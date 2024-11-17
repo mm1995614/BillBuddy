@@ -124,6 +124,6 @@ For security reasons, sensitive information such as database credentials and sec
 ## Contact
 
 Zhao-An, Wang
-ec23697@qmul.ac.uk
+joelanwang@gmail.com
 
 Note: This project is a student final project and is not intended for commercial use.
